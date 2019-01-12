@@ -1,0 +1,9 @@
+*.env
+!example.env
+*.yml
+!docker-compose.yml
+backend/backend_app/__pycache__/
+backend/backend_app/migrations/*
+!backend/backend_app/migrations/__init__.py
+backend/ptt_sounds/__pycache__/
+backend/statics/

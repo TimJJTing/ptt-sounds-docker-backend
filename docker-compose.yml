@@ -1,0 +1,82 @@
+version: "3"
+services:
+  # nginx web server
+  # TODO: consider using google's loadbalancer service with static buckets
+  nginx:
+    container_name: nginx
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    image: nginx
+    restart: always
+    volumes:
+      # for django's built-in admin site
+      - static-files:${STATIC_ROOT}
+      # mount volumes that stores crypt data
+      - acme-certs:/etc/letsencrypt
+      - acme-certs-data:/data/letsencrypt
+    ports:
+      - 80:80
+      - 443:443
+    depends_on:
+      - backend
+    command: nginx -g 'daemon off';
+  # backend logic by django
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    hostname: backend
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend:/srv/project
+      # for django's built-in admin site and drf
+      - static-files:${STATIC_ROOT}
+    depends_on:
+      - postgres
+    env_file: .env
+    command: >
+      bash -c '
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      mkdir ${WAV_MEDIA_ROOT} &&
+      python initadmin.py &&
+      gunicorn ptt_sounds.wsgi -b 0.0.0.0:8000'
+  # db service by postgres
+  # TODO: consider using cloud sql service (cloud sql proxy + sql instance?)
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    hostname: postgres
+    ports:
+      - 5432:5432
+  # messaging exchanging and session caching by redis
+  redis:
+    container_name: redis
+    image: redis:latest
+    hostname: redis
+    ports:
+      - 6379:6379
+  # async task handling by celery
+  celery:
+    container_name: celery
+    build:
+      context: ./backend
+    env_file: .env
+    # TODO: consider using daemonized celery
+    command: celery -A ptt_sounds worker -l info
+    volumes:
+      - ./backend:/srv/project
+      - static-files:${STATIC_ROOT}
+    depends_on:
+      - backend
+      - redis
+volumes:
+  static-files:
+  acme-certs:
+      external: true
+  acme-certs-data:
+      external: true

@@ -1,0 +1,21 @@
+Django==2.1.4
+djangorestframework==3.9.0
+django-redis==4.10.0
+django-celery-results==1.0.4
+django-cors-headers==2.4.0
+scrapinghub[msgpack]==2.0.3
+celery==4.2.1
+redis==3.0.1
+jseg==0.0.4
+pandas==0.23.4
+msgpack-python==0.5.6
+gunicorn==19.9.0
+certifi==2018.11.29
+pip==18.1
+pytz==2018.7
+wheel==0.32.3
+psycopg2==2.7.6.1
+six==1.11.0
+scipy==1.1.0
+# packages below may not be needed
+matplotlib==3.0.2
